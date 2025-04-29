@@ -1,22 +1,22 @@
-package org.extendify.bot.checker;
+package org.extendify.bot.analyzer;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.FileUtils;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.extendify.bot.Main;
+import org.extendify.bot.checker.VersionChecker;
+import org.extendify.bot.checker.VersionInfo;
+import org.extendify.bot.util.OperatingSystem;
 import org.extendify.bot.util.ScannablePlatform;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -33,29 +33,10 @@ public class VersionScanner {
     private static final String BASE_URL = "https://upgrade.scdn.co/upgrade/client/";
     private static final int ADDITIONAL_SEARCHES = 10;
     private static final int INCREMENT = 1000;
-    private final String appxUrl;
-
-    private Path downloadAppx() {
-        Path path = Paths.get("./data/latest.appx");
-
-        try {
-            if (Files.deleteIfExists(path)) {
-                LOGGER.info("Deleted old .appx file");
-            }
-
-            LOGGER.info("Downloading .appx file...");
-            FileUtils.copyURLToFile(new URL(this.appxUrl), path.toFile(), 10_000, 120_000);
-            LOGGER.info("Finished downloading .appx file");
-            return path;
-        } catch (IOException e) {
-            LOGGER.error("Couldn't download .appx file", e);
-        }
-
-        return null;
-    }
+    private final VersionInfo version;
 
     private String getFullVersion() {
-        Path path = this.downloadAppx();
+        Path path = this.version.downloadFile();
         if (path == null) {
             return null;
         }
@@ -94,7 +75,7 @@ public class VersionScanner {
         return null;
     }
 
-    public List<VersionInfo> scanInstallers() {
+    private List<VersionInfo> crawl() {
         String fullVersion = this.getFullVersion();
         if (fullVersion == null) {
             return new ArrayList<>();
@@ -147,6 +128,47 @@ public class VersionScanner {
         executor.shutdown();
 
         return result;
+    }
+
+    public void startScanAsync() {
+        new Thread(() -> {
+            try {
+                Main.JDA.awaitReady();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            LOGGER.info("Starting version scanner...");
+            List<VersionInfo> scanned = this.crawl();
+
+            Map<OperatingSystem, List<VersionInfo>> osToVersions = scanned
+                    .stream()
+                    .collect(Collectors.groupingBy(VersionInfo::getOs));
+            Map<ScannablePlatform, List<VersionInfo>> platformToVersion = Arrays
+                    .stream(ScannablePlatform.values())
+                    .collect(Collectors.toMap(
+                            platform -> platform,
+                            platform -> osToVersions.getOrDefault(platform.getOs(), new ArrayList<>())
+                    ));
+
+            Set<OperatingSystem> processed = new HashSet<>();
+
+            for (Map.Entry<ScannablePlatform, List<VersionInfo>> entry : platformToVersion.entrySet()) {
+                if (entry.getValue().isEmpty() || processed.contains(entry.getKey().getOs())) {
+                    continue;
+                }
+
+                TextChannel channel = Main.JDA.getTextChannelById(entry.getKey().getChannelId());
+                if (channel == null) {
+                    LOGGER.error("No text channel for {}", entry.getKey().name());
+                    continue;
+                }
+
+                processed.add(entry.getKey().getOs());
+
+                channel.sendMessage(VersionChecker.createMessage(entry.getValue()) + "\n" + "<@&" + entry.getKey().getRoleId() + ">").complete();
+            }
+        }, "Version Scanner Thread").start();
     }
 
     private CompletableFuture<VersionInfo> checkUrlAsync(String url, String version, ScannablePlatform platform, Executor executor) {

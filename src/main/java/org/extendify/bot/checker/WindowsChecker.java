@@ -1,19 +1,17 @@
 package org.extendify.bot.checker;
 
 import com.google.gson.JsonObject;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.extendify.bot.Main;
 import org.extendify.bot.util.CompareResult;
 import org.extendify.bot.util.OperatingSystem;
-import org.extendify.bot.util.ScannablePlatform;
 import org.extendify.bot.util.VersionParser;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class WindowsChecker extends VersionChecker {
     private static final Logger LOGGER = LogManager.getLogger("Windows Version Checker");
@@ -50,54 +48,6 @@ public class WindowsChecker extends VersionChecker {
                                .version(version)
                                .build());
             LOGGER.info("Added new version {} for architecture {}", version, arch);
-        }
-
-        return result;
-    }
-
-    @Override
-    public List<VersionInfo> getNewVersions() {
-        List<VersionInfo> result = super.getNewVersions();
-
-        if (!result.isEmpty()) {
-            new Thread(() -> {
-                try {
-                    Main.JDA.awaitReady();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                LOGGER.info("Starting version scanner...");
-                List<VersionInfo> scanned = new VersionScanner(result.get(result.size() - 1).getUrl()).scanInstallers();
-
-                Map<OperatingSystem, List<VersionInfo>> osToVersions = scanned
-                        .stream()
-                        .collect(Collectors.groupingBy(VersionInfo::getOs));
-                Map<ScannablePlatform, List<VersionInfo>> platformToVersion = Arrays
-                        .stream(ScannablePlatform.values())
-                        .collect(Collectors.toMap(
-                                platform -> platform,
-                                platform -> osToVersions.getOrDefault(platform.getOs(), new ArrayList<>())
-                        ));
-
-                Set<OperatingSystem> processed = new HashSet<>();
-
-                for (Map.Entry<ScannablePlatform, List<VersionInfo>> entry : platformToVersion.entrySet()) {
-                    if (entry.getValue().isEmpty() || processed.contains(entry.getKey().getOs())) {
-                        continue;
-                    }
-
-                    TextChannel channel = Main.JDA.getTextChannelById(entry.getKey().getChannelId());
-                    if (channel == null) {
-                        LOGGER.error("No text channel for {}", entry.getKey().name());
-                        continue;
-                    }
-
-                    processed.add(entry.getKey().getOs());
-
-                    channel.sendMessage(VersionChecker.createMessage(entry.getValue()) + "\n" + "<@&" + entry.getKey().getRoleId() + ">").complete();
-                }
-            }, "Version Scanner Thread").start();
         }
 
         return result;

@@ -1,18 +1,23 @@
 package org.extendify.bot;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.extendify.bot.analyzer.VersionAnalyzer;
 import org.extendify.bot.checker.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Main {
     public static final JDA JDA;
+    public static final Gson GSON = new GsonBuilder().create();
     private static final Logger LOGGER = LogManager.getLogger("Main");
 
     static {
@@ -35,6 +40,8 @@ public class Main {
             }
 
             while (true) {
+                List<VersionInfo> newVersions = new ArrayList<>();
+
                 for (VersionChecker checker : checkers) {
                     TextChannel channel = JDA.getTextChannelById(checker.getChannelId());
                     if (channel == null) {
@@ -47,8 +54,14 @@ public class Main {
                         continue;
                     }
 
+                    newVersions.addAll(versions);
+
                     String message = checker.formatMessage(versions);
                     channel.sendMessage(message + "\n" + "<@&" + checker.getRoleId() + ">").complete();
+                }
+
+                if (!newVersions.isEmpty()) {
+                    new VersionAnalyzer(newVersions).runAnalyzer();
                 }
 
                 try {
