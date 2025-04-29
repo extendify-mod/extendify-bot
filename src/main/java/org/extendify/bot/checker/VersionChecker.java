@@ -28,13 +28,10 @@ public abstract class VersionChecker {
     }
 
     public static String createMessage(List<VersionInfo> versions) {
-        boolean single = versions.size() == 1;
         StringBuilder message = new StringBuilder()
-                .append("## ")
-                .append(versions.size())
-                .append(" new version")
-                .append(single ? "" : "s")
-                .append(" are available on ")
+                .append("## Version")
+                .append(versions.get(0).getVersion())
+                .append(" is now available on ")
                 .append(versions.get(0).getOs())
                 .append(" for the following architectures:\n");
         for (VersionInfo version : versions) {
