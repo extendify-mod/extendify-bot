@@ -17,7 +17,7 @@ public class WindowsChecker extends VersionChecker {
     private static final Logger LOGGER = LogManager.getLogger("Windows Version Checker");
 
     public WindowsChecker(String channelId, String roleId) {
-        super(channelId, roleId);
+        super("windows", channelId, roleId);
     }
 
     @Override

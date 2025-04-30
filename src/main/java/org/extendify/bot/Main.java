@@ -61,6 +61,7 @@ public class Main {
                 }
 
                 if (!newVersions.isEmpty()) {
+                    LOGGER.info("Found {} new versions, running analyzer", newVersions.size());
                     new VersionAnalyzer(newVersions).runAnalyzer();
                 }
 

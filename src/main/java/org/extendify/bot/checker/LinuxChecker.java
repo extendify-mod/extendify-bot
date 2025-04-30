@@ -16,7 +16,7 @@ public class LinuxChecker extends VersionChecker {
     private static final String[] ARCHITECTURES = { "amd64", "i386" };
 
     public LinuxChecker(String channelId, String roleId) {
-        super(channelId, roleId);
+        super("linux", channelId, roleId);
     }
 
     @Override

@@ -1,9 +1,12 @@
 package org.extendify.bot.checker;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
+import org.extendify.bot.DataWriter;
 import org.extendify.bot.util.CompareResult;
 import org.extendify.bot.util.VersionParser;
 
@@ -16,20 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 public abstract class VersionChecker {
+    private final String id;
     @Getter private final String channelId;
     @Getter private final String roleId;
-    private List<VersionInfo> lastBatch;
-
-    public VersionChecker(String channelId, String roleId) {
-        this.channelId = channelId;
-        this.roleId = roleId;
-        this.lastBatch = new ArrayList<>();
-    }
 
     public static String createMessage(List<VersionInfo> versions) {
         StringBuilder message = new StringBuilder()
-                .append("## Version")
+                .append("## Version ")
                 .append(versions.get(0).getVersion())
                 .append(" is now available on ")
                 .append(versions.get(0).getOs())
@@ -61,7 +59,7 @@ public abstract class VersionChecker {
             boolean isNewer = false;
             boolean foundAny = false;
 
-            for (VersionInfo old : this.lastBatch) {
+            for (VersionInfo old : this.getLastBatch()) {
                 if (versionInfo.matches(old)) {
                     if (VersionParser.compare(versionInfo.getVersion(), old.getVersion()).equals(CompareResult.NEWER)) {
                         isNewer = true;
@@ -76,7 +74,7 @@ public abstract class VersionChecker {
             }
         }
 
-        this.lastBatch = batch;
+        this.saveBatch(batch);
         return newVersions;
     }
 
@@ -125,5 +123,24 @@ public abstract class VersionChecker {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void saveBatch(List<VersionInfo> batch) {
+        JsonArray array = new JsonArray();
+        batch.forEach(v -> array.add(v.serialize()));
+        new DataWriter(this.id + "_batch.json").writeJsonElement(array);
+    }
+
+    public List<VersionInfo> getLastBatch() {
+        JsonElement array = new DataWriter(this.id + "_batch.json").readJsonElement();
+        if (array == null) {
+            return new ArrayList<>();
+        }
+
+        List<VersionInfo> result = new ArrayList<>();
+        for (JsonElement element : array.getAsJsonArray()) {
+            result.add(VersionInfo.fromObject(element.getAsJsonObject()));
+        }
+        return result;
     }
 }

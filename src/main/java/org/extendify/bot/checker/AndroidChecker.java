@@ -18,7 +18,7 @@ public class AndroidChecker extends VersionChecker {
     private static final Logger LOGGER = LogManager.getLogger("Android Version Checker");
 
     public AndroidChecker(String channelId, String roleId) {
-        super(channelId, roleId);
+        super("android", channelId, roleId);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class AndroidChecker extends VersionChecker {
                         VersionInfo
                                 .builder()
                                 .os(OperatingSystem.ANDROID)
-                                .architecture("*")
+                                .architecture("AnyCPU")
                                 .channel("APKPURE")
                                 .url(url)
                                 .version(version)
