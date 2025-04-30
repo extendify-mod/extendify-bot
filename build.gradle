@@ -24,3 +24,13 @@ dependencies {
     implementation "org.jetbrains:annotations:26.0.1"
     implementation "pink.madis.apk.arsc:android-chunk-utils:0.0.8"
 }
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes "Main-Class": "org.extendify.bot.Main"
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
