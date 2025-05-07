@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +44,7 @@ public class Main {
                 List<VersionInfo> newVersions = new ArrayList<>();
 
                 for (VersionChecker checker : checkers) {
-                    TextChannel channel = JDA.getTextChannelById(checker.getChannelId());
+                    NewsChannel channel = JDA.getNewsChannelById(checker.getChannelId());
                     if (channel == null) {
                         LOGGER.error("No text channel for {}", checker.getClass().getSimpleName());
                         continue;

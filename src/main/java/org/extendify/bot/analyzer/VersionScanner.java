@@ -1,6 +1,7 @@
 package org.extendify.bot.analyzer;
 
 import lombok.RequiredArgsConstructor;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -158,7 +159,7 @@ public class VersionScanner {
                     continue;
                 }
 
-                TextChannel channel = Main.JDA.getTextChannelById(entry.getKey().getChannelId());
+                NewsChannel channel = Main.JDA.getNewsChannelById(entry.getKey().getChannelId());
                 if (channel == null) {
                     LOGGER.error("No text channel for {}", entry.getKey().name());
                     continue;

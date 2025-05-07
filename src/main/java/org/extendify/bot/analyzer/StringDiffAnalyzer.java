@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.internal.utils.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -172,7 +173,7 @@ public class StringDiffAnalyzer {
             JsonObject oldAndroidStrings = this.loadSavedStrings("android");
 
             if (!oldWindowsStrings.isEmpty() && this.windowsVersion != null) {
-                TextChannel channel = Main.JDA.getTextChannelById(System.getProperty("DESKTOP_STRINGS_CHANNEL"));
+                NewsChannel channel = Main.JDA.getNewsChannelById(System.getProperty("DESKTOP_STRINGS_CHANNEL"));
                 if (channel != null) {
                     JsonObjectDiff diff = JsonObjectDiff.diff(oldWindowsStrings, windowsStrings);
                     channel.sendMessage(
@@ -188,7 +189,7 @@ public class StringDiffAnalyzer {
             }
 
             if (!oldAndroidStrings.isEmpty() && this.androidVersion != null) {
-                TextChannel channel = Main.JDA.getTextChannelById(System.getProperty("MOBILE_STRINGS_CHANNEL"));
+                NewsChannel channel = Main.JDA.getNewsChannelById(System.getProperty("MOBILE_STRINGS_CHANNEL"));
                 if (channel != null) {
                     JsonObjectDiff diff = JsonObjectDiff.diff(oldAndroidStrings, androidStrings);
                     channel.sendMessage(
