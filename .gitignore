@@ -44,3 +44,4 @@ bin/
 .env
 data/
 .idea/
+.direnv
