@@ -14,7 +14,6 @@ import org.extendify.bot.util.ScannablePlatform;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -49,7 +48,16 @@ public class VersionScanner {
                     return null;
                 }
 
-                String content = IOUtils.toString(archive.getInputStream(entry), StandardCharsets.UTF_8);
+                byte[] binary = IOUtils.toByteArray(archive.getInputStream(entry));
+                StringBuilder printable = new StringBuilder();
+                for (byte b : binary) {
+                    if (b >= 32 && b <= 126) {
+                        printable.append((char) b);
+                    } else {
+                        printable.append(' ');
+                    }
+                }
+                String content = printable.toString();
                 Pattern pattern = Pattern.compile("(?<![\\w\\-])(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)\\.(g[0-9a-f]{8})(?![\\w\\-])");
                 Matcher matcher = pattern.matcher(content);
 
