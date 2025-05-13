@@ -1,0 +1,27 @@
+name: Build AppImage
+on: [push]
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Nix
+          # You may pin to the exact commit or the version. Was @31
+          # uses: cachix/install-nix-action@526118121621777ccd86f79b04685a9319637641
+        uses: cachix/install-nix-action@526118121621777ccd86f79b04685a9319637641
+      - name: Bundle AppImage
+        run: nix bundle --bundler github:ralismark/nix-appimage/fc1192dbec82f5857f86ccc6dfdf2ad97bc9c62a
+      - name: Get Short SHA
+        id: short
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Upload AppImage Artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          # Artifact name
+          name: extendify-bot-${{ steps.short.outputs.sha }}
+          # A file, directory or wildcard pattern that describes what to upload
+          path: ./extendify-bot.AppImage
+          # The desired behavior if no files are found using the provided path.
+          if-no-files-found: error
+          # Duration after which artifact will expire in days. 0 means using default retention.
+          retention-days: 90
+
