@@ -9,6 +9,9 @@ jobs:
           # You may pin to the exact commit or the version. Was @31
           # uses: cachix/install-nix-action@526118121621777ccd86f79b04685a9319637641
         uses: cachix/install-nix-action@526118121621777ccd86f79b04685a9319637641
+      - name: Build
+        # Build with logs to catch early failures and have logs
+        run: nix build -L
       - name: Bundle AppImage
         run: nix bundle --bundler github:ralismark/nix-appimage/fc1192dbec82f5857f86ccc6dfdf2ad97bc9c62a
       - name: Get Short SHA
@@ -25,4 +28,6 @@ jobs:
           if-no-files-found: error
           # Duration after which artifact will expire in days. 0 means using default retention.
           retention-days: 90
+          # AppImages are already compressed, this will do nothing
+          compression-level: 0
 
