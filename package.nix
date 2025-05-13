@@ -3,7 +3,6 @@
 , makeWrapper
 , jdk11
 , lib
-, tree
 ,
 }:
 let
@@ -17,7 +16,6 @@ let
     nativeBuildInputs = [
       gradle
       makeWrapper
-      tree
     ];
 
     mitmCache = gradle.fetchDeps {
@@ -39,7 +37,6 @@ let
       runHook preInstall
 
       mkdir -p $out/{bin,share/${final.pname}}
-      tree build
       cp build/libs/*.jar $out/share/${final.pname}/${final.jarName}
 
       makeWrapper ${jdk11}/bin/java $out/bin/${final.pname} \
