@@ -13,11 +13,34 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class DataWriter {
     private static final Logger LOGGER = LogManager.getLogger("Data Writer");
     private final String filename;
+
+    public static void deleteOldDownloads() {
+        Path path = Paths.get("./data");
+
+        if (!Files.exists(path)) {
+            return;
+        }
+
+        try (Stream<Path> stream = Files.walk(path)) {
+            stream.forEach(v -> {
+                try {
+                    if (v.endsWith(".download")) {
+                        Files.deleteIfExists(v);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private Path getPath() {
         return Paths.get("./data", this.filename.trim().toLowerCase());

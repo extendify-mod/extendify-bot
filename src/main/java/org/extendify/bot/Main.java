@@ -5,8 +5,8 @@ import com.google.gson.GsonBuilder;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.extendify.bot.analyzer.VersionAnalyzer;
@@ -26,7 +26,17 @@ public class Main {
         JDA = JDABuilder.create(System.getProperty("DISCORD_TOKEN"), Collections.emptyList()).build();
     }
 
+    public static GuildMessageChannel getChannel(String id) {
+        GuildChannel channel = JDA.getGuildChannelById(id);
+        if (channel instanceof GuildMessageChannel) {
+            return (GuildMessageChannel) channel;
+        }
+        return null;
+    }
+
     public static void main(String[] args) {
+        DataWriter.deleteOldDownloads();
+
         VersionChecker[] checkers = {
                 new AndroidChecker(System.getProperty("ANDROID_RELEASE_CHANNEL"), System.getProperty("ANDROID_PING_ROLE")),
                 new LinuxChecker(System.getProperty("LINUX_RELEASE_CHANNEL"), System.getProperty("LINUX_PING_ROLE")),
@@ -44,7 +54,7 @@ public class Main {
                 List<VersionInfo> newVersions = new ArrayList<>();
 
                 for (VersionChecker checker : checkers) {
-                    NewsChannel channel = JDA.getNewsChannelById(checker.getChannelId());
+                    GuildMessageChannel channel = getChannel(checker.getChannelId());
                     if (channel == null) {
                         LOGGER.error("No text channel for {}", checker.getClass().getSimpleName());
                         continue;

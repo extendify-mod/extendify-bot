@@ -4,8 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
-import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.internal.utils.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -128,35 +127,37 @@ public class StringDiffAnalyzer {
         return result;
     }
 
-    private String formatMessage(JsonObjectDiff diff) {
-        StringBuilder message = new StringBuilder();
-
+    private void sendMessages(JsonObjectDiff diff, GuildMessageChannel channel) {
         if (!diff.getAdded().isEmpty()) {
+            StringBuilder message = new StringBuilder();
             message.append("**Added**\n```diff\n");
             for (Map.Entry<String, String> entry : diff.getAdded().entrySet()) {
-                message.append("+ ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                message.append("+ ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n\n");
             }
             message.append("```");
+            channel.sendMessage(message).complete();
         }
 
         if (!diff.getRemoved().isEmpty()) {
+            StringBuilder message = new StringBuilder();
             message.append("\n\n**Removed**\n```diff\n");
             for (Map.Entry<String, String> entry : diff.getRemoved().entrySet()) {
-                message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n\n");
             }
             message.append("```");
+            channel.sendMessage(message).complete();
         }
 
         if (!diff.getChanged().isEmpty()) {
+            StringBuilder message = new StringBuilder();
             message.append("\n\n**Changed**\n```diff\n");
             for (Map.Entry<String, Pair<String, String>> entry : diff.getChanged().entrySet()) {
                 message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue().getLeft()).append("\n");
                 message.append("+ ").append(entry.getKey()).append(": ").append(entry.getValue().getRight()).append("\n\n");
             }
             message.append("```");
+            channel.sendMessage(message).complete();
         }
-
-        return message.toString();
     }
 
     public void diffStringsAsync() {
@@ -173,34 +174,36 @@ public class StringDiffAnalyzer {
             JsonObject oldAndroidStrings = this.loadSavedStrings("android");
 
             if (!oldWindowsStrings.isEmpty() && this.windowsVersion != null) {
-                NewsChannel channel = Main.JDA.getNewsChannelById(System.getProperty("DESKTOP_STRINGS_CHANNEL"));
+                GuildMessageChannel channel = Main.getChannel(System.getProperty("DESKTOP_STRINGS_CHANNEL"));
                 if (channel != null) {
                     JsonObjectDiff diff = JsonObjectDiff.diff(oldWindowsStrings, windowsStrings);
-                    channel.sendMessage(
-                            "## New strings for desktop version (" +
-                            this.windowsVersion.getVersion() +
-                            ", Windows) found:\n" +
-                            this.formatMessage(diff) +
-                            "\n\n<@&" +
-                            System.getProperty("DESKTOP_STRINGS_ROLE") +
-                            ">"
-                    ).complete();
+                    if (diff.hasChanged()) {
+                        channel.sendMessage(
+                                "## New strings for desktop version (" +
+                                this.windowsVersion.getVersion() +
+                                ", Windows) found:\n<@&" +
+                                System.getProperty("DESKTOP_STRINGS_ROLE") +
+                                ">"
+                        ).complete();
+                        this.sendMessages(diff, channel);
+                    }
                 }
             }
 
             if (!oldAndroidStrings.isEmpty() && this.androidVersion != null) {
-                NewsChannel channel = Main.JDA.getNewsChannelById(System.getProperty("MOBILE_STRINGS_CHANNEL"));
+                GuildMessageChannel channel = Main.getChannel(System.getProperty("MOBILE_STRINGS_CHANNEL"));
                 if (channel != null) {
                     JsonObjectDiff diff = JsonObjectDiff.diff(oldAndroidStrings, androidStrings);
-                    channel.sendMessage(
-                            "## New strings for mobile version (" +
-                            this.androidVersion.getVersion() +
-                            ", Android) found:\n" +
-                            this.formatMessage(diff) +
-                            "\n\n<@&" +
-                            System.getProperty("MOBILE_STRINGS_ROLE") +
-                            ">"
-                    ).complete();
+                    if (diff.hasChanged()) {
+                        channel.sendMessage(
+                                "## New strings for mobile version (" +
+                                this.androidVersion.getVersion() +
+                                ", Android) found:\n<@&" +
+                                System.getProperty("MOBILE_STRINGS_ROLE") +
+                                ">"
+                        ).complete();
+                        this.sendMessages(diff, channel);
+                    }
                 }
             }
 

@@ -18,12 +18,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 @Builder
 @ToString
 public class VersionInfo {
     private static final Logger LOGGER = LogManager.getLogger("Version Info Instance");
+    private static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
     private final OperatingSystem os;
     private final String architecture;
     private final String channel;
@@ -41,7 +45,7 @@ public class VersionInfo {
     }
 
     private String getFilename() {
-        return (this.getOs().name().toLowerCase() + "_" + this.getArchitecture().toLowerCase() + "_" + this.getChannel().toLowerCase()).replace(' ', '-');
+        return (this.getOs().name().toLowerCase() + "_" + this.getArchitecture().toLowerCase() + "_" + this.getChannel().toLowerCase()).replace(' ', '-') + ".download";
     }
 
     public synchronized Path downloadFile() {
@@ -63,9 +67,12 @@ public class VersionInfo {
                 Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
             }
 
+            SCHEDULER.schedule(this::deleteFile, 10L, TimeUnit.MINUTES);
+
             LOGGER.info("Finished downloading file {}", filename);
         } catch (IOException e) {
             LOGGER.error("Couldn't download file {}", filename, e);
+            return null;
         }
 
         return path;
