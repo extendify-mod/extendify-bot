@@ -44,3 +44,5 @@ bin/
 .env
 data/
 .idea/
+.direnv
+extendify-bot.AppImage
