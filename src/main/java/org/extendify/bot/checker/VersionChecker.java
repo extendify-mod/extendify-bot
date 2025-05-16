@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.extendify.bot.DataWriter;
 import org.extendify.bot.util.CompareResult;
 import org.extendify.bot.util.VersionParser;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,6 +22,8 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public abstract class VersionChecker {
+    private static final int REQUEST_TRIES = 5;
+    private static final long REQUEST_DELAY = 2000L;
     private final String id;
     @Getter private final String channelId;
     @Getter private final String roleId;
@@ -107,22 +110,40 @@ public abstract class VersionChecker {
         }
     }
 
-    public String sendGetRequest(String url, JsonObject headers) {
+    public @Nullable String sendGetRequest(String url, JsonObject headers) {
         try {
-            HttpURLConnection connection = this.sendRawRequest(url, "GET", headers);
-            return IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
+            int tries = 0;
+            while (tries < REQUEST_TRIES) {
+                HttpURLConnection connection = this.sendRawRequest(url, "GET", headers);
+                if (connection.getResponseCode() != 200) {
+                    tries++;
+                    Thread.sleep(REQUEST_DELAY);
+                    continue;
+                }
+                return IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
+            }
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
-    public String sendPostRequest(String url, JsonObject headers, String data) {
+    public @Nullable String sendPostRequest(String url, JsonObject headers, String data) {
         try {
-            HttpURLConnection connection = this.sendRawRequest(url, "POST", headers, data);
-            return IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
+            int tries = 0;
+            while (tries < REQUEST_TRIES) {
+                HttpURLConnection connection = this.sendRawRequest(url, "POST", headers, data);
+                if (connection.getResponseCode() != 200) {
+                    tries++;
+                    Thread.sleep(REQUEST_DELAY);
+                    continue;
+                }
+                return IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
+            }
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     public void saveBatch(List<VersionInfo> batch) {

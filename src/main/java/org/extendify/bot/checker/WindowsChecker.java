@@ -25,6 +25,10 @@ public class WindowsChecker extends VersionChecker {
         List<VersionInfo> result = new ArrayList<>();
 
         String response = this.sendPostRequest("https://store.rg-adguard.net/api/GetFiles", new JsonObject(), "type=url&url=https://apps.microsoft.com/detail/9ncbcszsjrsb&ring=RP&lang=en-US");
+        if (response == null) {
+            LOGGER.warn("No response from AdGuard");
+            return result;
+        }
         LOGGER.info("Got response from AdGuard");
         Pattern pattern = Pattern.compile("<a\\s+href=\"([^\"]+)\"[^>]*>SpotifyAB.SpotifyMusic_(.+?)_(arm64|x64)__[^<]+?\\.appx");
         Matcher matcher = pattern.matcher(response);

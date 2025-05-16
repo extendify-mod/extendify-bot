@@ -26,7 +26,11 @@ public class LinuxChecker extends VersionChecker {
         for (String channel : CHANNELS) {
             for (String arch : ARCHITECTURES) {
                 String url = BASE_URL + "/dists/" + channel + "/non-free/binary-" + arch + "/Packages";
-                JsonObject pkg = PackageParser.parse(this.sendGetRequest(url, new JsonObject()))
+                String response = this.sendGetRequest(url, new JsonObject());
+                if (response == null) {
+                    continue;
+                }
+                JsonObject pkg = PackageParser.parse(response)
                                               .stream()
                                               .filter(v -> v.get("package").getAsString().equals("spotify-client"))
                                               .findFirst()

@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.extendify.bot.util.OperatingSystem;

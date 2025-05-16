@@ -28,13 +28,12 @@ public class AndroidChecker extends VersionChecker {
             headers.addProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
 
             String url = "https://d.apkpure.com/b/XAPK/com.spotify.music?version=latest";
-
             HttpURLConnection connection = this.sendRawRequest(url, "GET", headers);
-            LOGGER.info("Got response from APKPure");
             if (connection.getResponseCode() != 200) {
                 LOGGER.error("Couldn't get latest Android version due to ratelimit or IP block.");
                 return new ArrayList<>();
             }
+            LOGGER.info("Got response from APKPure");
 
             Pattern pattern = Pattern.compile("Podcasts_(.+?)_");
             Matcher matcher = pattern.matcher(connection.getHeaderField("Content-Disposition"));
