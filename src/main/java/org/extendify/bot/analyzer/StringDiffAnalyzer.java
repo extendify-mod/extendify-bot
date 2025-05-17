@@ -17,13 +17,18 @@ import pink.madis.apk.arsc.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 @RequiredArgsConstructor
 public class StringDiffAnalyzer {
+    private static final int CHARACTER_LIMIT = 2000;
     private static final Logger LOGGER = LogManager.getLogger("Translation Diff Analyzer");
     private final @Nullable VersionInfo windowsVersion;
     private final @Nullable VersionInfo androidVersion;
@@ -127,36 +132,59 @@ public class StringDiffAnalyzer {
         return result;
     }
 
+    @SuppressWarnings("StringConcatenationInLoop")
+    private List<String> splitMessage(String title, Collection<String> lines) {
+        List<String> parts = new ArrayList<>();
+        String current = "**" + title + "**\n```diff\n";
+
+        for (String line : lines) {
+            String add = line + "\n\n";
+            if ((current + add).length() > CHARACTER_LIMIT - 3) {
+                parts.add(current + "```");
+                current = "```diff\n" + add;
+            } else {
+                current += add;
+            }
+        }
+
+        if (!current.equals("```diff\n")) {
+            parts.add(current + "```");
+        }
+
+        return parts;
+    }
+
     private void sendMessages(JsonObjectDiff diff, GuildMessageChannel channel) {
         if (!diff.getAdded().isEmpty()) {
-            StringBuilder message = new StringBuilder();
-            message.append("**Added**\n```diff\n");
-            for (Map.Entry<String, String> entry : diff.getAdded().entrySet()) {
-                message.append("+ ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n\n");
+            List<String> addedLines = diff.getAdded().entrySet().stream()
+                                          .map(entry -> "+ " + entry.getKey() + ": " + entry.getValue())
+                                          .collect(Collectors.toList());
+
+            for (String message : this.splitMessage("Added", addedLines)) {
+                channel.sendMessage(message).complete();
             }
-            message.append("```");
-            channel.sendMessage(message).complete();
         }
 
         if (!diff.getRemoved().isEmpty()) {
-            StringBuilder message = new StringBuilder();
-            message.append("\n\n**Removed**\n```diff\n");
-            for (Map.Entry<String, String> entry : diff.getRemoved().entrySet()) {
-                message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n\n");
+            List<String> removedLines = diff.getRemoved().entrySet().stream()
+                                            .map(entry -> "- " + entry.getKey() + ": " + entry.getValue())
+                                            .collect(Collectors.toList());
+
+            for (String message : this.splitMessage("Removed", removedLines)) {
+                channel.sendMessage(message).complete();
             }
-            message.append("```");
-            channel.sendMessage(message).complete();
         }
 
         if (!diff.getChanged().isEmpty()) {
-            StringBuilder message = new StringBuilder();
-            message.append("\n\n**Changed**\n```diff\n");
+            List<String> changedLines = new ArrayList<>();
             for (Map.Entry<String, Pair<String, String>> entry : diff.getChanged().entrySet()) {
-                message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue().getLeft()).append("\n");
-                message.append("+ ").append(entry.getKey()).append(": ").append(entry.getValue().getRight()).append("\n\n");
+                changedLines.add("- " + entry.getKey() + ": " + entry.getValue().getLeft());
+                changedLines.add("+ " + entry.getKey() + ": " + entry.getValue().getRight());
             }
-            message.append("```");
-            channel.sendMessage(message).complete();
+
+            for (String message : this.splitMessage("Changed", changedLines)) {
+                channel.sendMessage(message).complete();
+            }
         }
     }
 
