@@ -26,9 +26,13 @@ dependencies {
 }
 
 jar {
+    archiveFileName = "extendifybot.jar"
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
-        attributes "Main-Class": "org.extendify.bot.Main"
+        attributes (
+                "Main-Class": "org.extendify.bot.Main",
+                "Specification-Version": project.version
+        )
     }
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }

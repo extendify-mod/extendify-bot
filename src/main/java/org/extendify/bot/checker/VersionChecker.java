@@ -58,6 +58,10 @@ public abstract class VersionChecker {
         List<VersionInfo> newVersions = new ArrayList<>();
         List<VersionInfo> batch = this.getLatestVersions();
 
+        if (batch.isEmpty()) {
+            return newVersions;
+        }
+
         for (VersionInfo versionInfo : batch) {
             boolean isNewer = false;
             boolean foundAny = false;

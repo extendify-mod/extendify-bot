@@ -52,6 +52,7 @@ public class VersionInfo {
         Path path = Paths.get("./data", filename);
 
         if (Files.exists(path)) {
+            LOGGER.info("Version {} already downloaded, using cached path", filename);
             return path;
         }
 

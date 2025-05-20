@@ -30,6 +30,7 @@ public class LinuxChecker extends VersionChecker {
                 if (response == null) {
                     continue;
                 }
+
                 JsonObject pkg = PackageParser.parse(response)
                                               .stream()
                                               .filter(v -> v.get("package").getAsString().equals("spotify-client"))
@@ -46,7 +47,7 @@ public class LinuxChecker extends VersionChecker {
                                    .os(OperatingSystem.LINUX)
                                    .architecture(arch)
                                    .channel(channel.toUpperCase())
-                                   .url(BASE_URL + "/" + pkg.get("filename"))
+                                   .url(BASE_URL + "/" + pkg.get("filename").getAsString())
                                    .version(version)
                                    .build());
                 LOGGER.info("Added new version {} for architecture {}", version, arch);

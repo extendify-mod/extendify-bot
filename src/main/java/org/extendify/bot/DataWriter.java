@@ -24,17 +24,19 @@ public class DataWriter {
         Path path = Paths.get("./data");
 
         if (!Files.exists(path)) {
+            LOGGER.warn("No data path found, couldn't clean up");
             return;
         }
 
         try (Stream<Path> stream = Files.walk(path)) {
             stream.forEach(v -> {
-                try {
-                    if (v.endsWith(".download")) {
-                        Files.deleteIfExists(v);
+                if (v.toString().endsWith(".download")) {
+                    if (v.toFile().delete()) {
+                        LOGGER.info("Cleaned up file {}", v.toString());
+                        return;
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+
+                    LOGGER.warn("Couldn't clean up file {}", v.toString());
                 }
             });
         } catch (IOException e) {

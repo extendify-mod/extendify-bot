@@ -28,8 +28,13 @@ public class WindowsChecker extends VersionChecker {
         if (response == null) {
             LOGGER.warn("No response from AdGuard");
             return result;
+        } else if (response.contains("The server returned an empty list")) {
+            LOGGER.warn("Ratelimited by AdGuard");
+            return result;
+        } else {
+            LOGGER.info("Got response from AdGuard");
         }
-        LOGGER.info("Got response from AdGuard");
+
         Pattern pattern = Pattern.compile("<a\\s+href=\"([^\"]+)\"[^>]*>SpotifyAB.SpotifyMusic_(.+?)_(arm64|x64)__[^<]+?\\.appx");
         Matcher matcher = pattern.matcher(response);
 

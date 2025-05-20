@@ -26,8 +26,8 @@ public class VersionAnalyzer {
         return new StringDiffAnalyzer(windowsVersion.orElse(null), androidVersion.orElse(null));
     }
 
-    public void runAnalyzer() {
-        if (this.scanner != null) {
+    public void runAnalyzer(boolean newVersion) {
+        if (this.scanner != null && newVersion) {
             this.scanner.startScanAsync();
         }
 

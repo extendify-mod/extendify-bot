@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.apache.logging.log4j.LogManager;
@@ -18,12 +19,18 @@ import java.util.List;
 
 public class Main {
     public static final JDA JDA;
+    public static final boolean DEVELOPMENT;
+    public static final String VERSION = Main.class.getPackage().getSpecificationVersion();
     public static final Gson GSON = new GsonBuilder().create();
     private static final Logger LOGGER = LogManager.getLogger("Main");
 
     static {
         Dotenv.configure().systemProperties().load();
+        DEVELOPMENT = Boolean.parseBoolean(System.getProperty("DEVELOPMENT"));
         JDA = JDABuilder.create(System.getProperty("DISCORD_TOKEN"), Collections.emptyList()).build();
+        JDA.getPresence().setActivity(Activity.listening("Extendify (" + (DEVELOPMENT ? "Dev" : VERSION) + ")"));
+
+        LOGGER.info("Running Extendify Bot {} ({})", VERSION, DEVELOPMENT ? "Dev" : "Prod");
     }
 
     public static GuildMessageChannel getChannel(String id) {
@@ -71,14 +78,13 @@ public class Main {
                     channel.sendMessage(message + "\n" + "<@&" + checker.getRoleId() + ">").complete();
                 }
 
-                if (!newVersions.isEmpty()) {
-                    LOGGER.info("Found {} new versions, running analyzer", newVersions.size());
-                    new VersionAnalyzer(newVersions).runAnalyzer();
-                }
+                LOGGER.info("Found {} new versions", newVersions.size());
+
+                new VersionAnalyzer(newVersions).runAnalyzer(!newVersions.isEmpty());
 
                 try {
                     // noinspection BusyWait
-                    Thread.sleep(5 * 60 * 1000);
+                    Thread.sleep((DEVELOPMENT ? 1 : 5) * 60 * 1000);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
