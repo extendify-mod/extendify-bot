@@ -8,6 +8,7 @@
 let
   self = stdenv.mkDerivation (final: {
     pname = "extendifybot";
+    version = "1.0";
     jarName = "${final.pname}.jar";
 
     src = ./.;
