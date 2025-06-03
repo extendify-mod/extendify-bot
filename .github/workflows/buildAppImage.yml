@@ -21,9 +21,9 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           # Artifact name
-          name: extendify-bot.AppImage
+          name: extendifybot.AppImage
           # A file, directory or wildcard pattern that describes what to upload
-          path: ./extendify-bot.AppImage
+          path: ./extendifybot.AppImage
           # The desired behavior if no files are found using the provided path.
           if-no-files-found: error
           # Duration after which artifact will expire in days. 0 means using default retention.

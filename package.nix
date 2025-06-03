@@ -50,7 +50,7 @@ let
         fromSource
         binaryBytecode
       ];
-      mainProgram = "extendify-bot";
+      mainProgram = "${final.pname}";
     };
   });
 in
