@@ -29,7 +29,7 @@ public class AndroidChecker extends VersionChecker {
 
             String url = "https://d.apkpure.com/b/XAPK/com.spotify.music?version=latest";
             HttpURLConnection connection = this.sendRawRequest(url, "GET", headers);
-            if (connection.getResponseCode() != 200) {
+            if (connection.getResponseCode() != 200 || connection.getHeaderField("Content-Disposition") == null) {
                 LOGGER.error("Couldn't get latest Android version due to ratelimit or IP block.");
                 return new ArrayList<>();
             }
